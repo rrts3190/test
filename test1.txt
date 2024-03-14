@@ -26,3 +26,32 @@ public class MySpringBootApplication {
         };
     }
 }
+
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.PropertySource;
+
+import java.util.Arrays;
+import java.util.List;
+
+@SpringBootApplication
+@PropertySource("classpath:config1.properties") // Specify the location of the properties file
+public class MySpringBootApplication implements CommandLineRunner {
+
+    @Value("${producername}")
+    private String producerNamesString;
+
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(MySpringBootApplication.class)
+                .run(args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        List<String> producerNames = Arrays.asList(producerNamesString.split(","));
+        System.out.println("Producer Names: " + producerNames);
+    }
+}
