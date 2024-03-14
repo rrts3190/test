@@ -1,6 +1,28 @@
-Hi I come from intellijIdea in main branch
-Hi I come from intellijIdea in feature branch
-Hi I come from github web in main branch
-Hi I come from github web in main branch-2
-Hi I come from github web in main branch-03
-Hi I come from github web in main branch-03-2
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class MySpringBootApplication {
+
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(MySpringBootApplication.class)
+                .run(args);
+    }
+
+    @Bean
+    public CommandLineRunner commandLineRunner(FileComparator fileComparator) {
+        return args -> {
+            if (args.length < 2) {
+                System.out.println("Please provide two file names.");
+                return;
+            }
+
+            String file1Name = args[0];
+            String file2Name = args[1];
+
+            fileComparator.compareFiles(file1Name, file2Name);
+        };
+    }
+}
