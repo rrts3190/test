@@ -55,3 +55,34 @@ public class MySpringBootApplication implements CommandLineRunner {
         System.out.println("Producer Names: " + producerNames);
     }
 }
+
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+
+import java.util.Arrays;
+import java.util.List;
+
+@SpringBootApplication
+public class MySpringBootApplication implements CommandLineRunner {
+
+    @Value("${producername}")
+    private String producerNamesString;
+
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(MySpringBootApplication.class)
+                .run(args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        if (producerNamesString == null) {
+            producerNamesString = "defaultProducer";
+        }
+        List<String> producerNames = Arrays.asList(producerNamesString.split(","));
+        System.out.println("Producer Names: " + producerNames);
+    }
+}
+
