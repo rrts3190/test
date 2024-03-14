@@ -1,0 +1,59 @@
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
+@SpringBootApplication
+public class FileComparatorApplication implements CommandLineRunner {
+
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(FileComparatorApplication.class)
+                .run(args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        // Check if two file names are provided as command-line arguments
+        if (args.length < 2) {
+            System.out.println("Please provide two file names.");
+            return;
+        }
+
+        String file1Name = args[0];
+        String file2Name = args[1];
+
+        // Read contents of the files
+        List<String> file1Lines = Files.readAllLines(Paths.get(file1Name));
+        List<String> file2Lines = Files.readAllLines(Paths.get(file2Name));
+
+        // Compare files
+        boolean areEqual = compareFiles(file1Lines, file2Lines);
+
+        // Print result
+        if (areEqual) {
+            System.out.println("Files are identical.");
+        } else {
+            System.out.println("Files are different.");
+        }
+    }
+
+    private boolean compareFiles(List<String> file1Lines, List<String> file2Lines) {
+        // Efficient file comparison logic
+        // For simplicity, let's assume files are equal if they have the same number of lines and same content line by line
+        if (file1Lines.size() != file2Lines.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < file1Lines.size(); i++) {
+            if (!file1Lines.get(i).equals(file2Lines.get(i))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
