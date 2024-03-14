@@ -86,3 +86,50 @@ public class MySpringBootApplication implements CommandLineRunner {
     }
 }
 
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.env.StandardEnvironment;
+
+import java.util.Arrays;
+import java.util.List;
+
+@SpringBootApplication
+public class MySpringBootApplication implements CommandLineRunner {
+
+    @Value("${producername:defaultProducer}")
+    private String producerNamesString;
+
+    public static void main(String[] args) {
+        ConfigurableEnvironment environment = new StandardEnvironment();
+        MutablePropertySources propertySources = environment.getPropertySources();
+        
+        // Get the location of the properties file from a system property or environment variable
+        String propertyFileLocation = System.getProperty("config.location");
+        if (propertyFileLocation == null) {
+            propertyFileLocation = System.getenv("CONFIG_LOCATION");
+        }
+        
+        // Add the properties file dynamically
+        if (propertyFileLocation != null) {
+            propertySources.addLast(new PropertiesPropertySource("customPropertySource", new ResourcePropertySource(propertyFileLocation)));
+        }
+        
+        new SpringApplicationBuilder(MySpringBootApplication.class)
+                .environment(environment)
+                .run(args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        List<String> producerNames = Arrays.asList(producerNamesString.split(","));
+        System.out.println("Producer Names: " + producerNames);
+    }
+}
+
