@@ -47,4 +47,19 @@ class AppConfig {
         MutablePropertySources propertySources = env.getPropertySources();
         propertySources.addLast(new PropertiesPropertySource("externalProperties", props));
     }
+
+  private void loadExternalProperties(ConfigurableEnvironment env, String externalPropertiesFile) throws IOException {
+        Properties props = new Properties();
+        File file = new File(externalPropertiesFile);
+        if (!file.exists()) {
+            System.err.println("External properties file not found: " + externalPropertiesFile);
+            return;
+        }
+        try (FileInputStream fis = new FileInputStream(file)) {
+            props.load(fis);
+        }
+
+        MutablePropertySources propertySources = env.getPropertySources();
+        propertySources.addLast(new PropertiesPropertySource("externalProperties", props));
+    }
 }
