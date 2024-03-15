@@ -1,0 +1,50 @@
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.env.StandardEnvironment;
+
+import java.io.IOException;
+import java.util.Properties;
+
+@SpringBootApplication
+public class MyApp implements CommandLineRunner {
+
+    @Value("${my.property}")
+    private String myProperty;
+
+    public static void main(String[] args) {
+        SpringApplication.run(MyApp.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        // Use the property
+        System.out.println("my.property = " + myProperty);
+    }
+}
+
+@Configuration
+@PropertySource("classpath:default.properties") // Default properties file
+class AppConfig {
+
+    public AppConfig(ConfigurableEnvironment env) throws IOException {
+        String externalPropertiesFile = System.getProperty("externalPropertiesFile");
+        if (externalPropertiesFile != null) {
+            loadExternalProperties(env, externalPropertiesFile);
+        }
+    }
+
+    private void loadExternalProperties(ConfigurableEnvironment env, String externalPropertiesFile) throws IOException {
+        Properties props = new Properties();
+        props.load(AppConfig.class.getClassLoader().getResourceAsStream(externalPropertiesFile));
+
+        MutablePropertySources propertySources = env.getPropertySources();
+        propertySources.addLast(new PropertiesPropertySource("externalProperties", props));
+    }
+}
