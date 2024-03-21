@@ -1,0 +1,39 @@
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
+
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class CommandLineApplicationTest {
+
+    @Mock
+    private MessageHeaderService messageHeaderService;
+
+    @Mock
+    private ErrorHeaderService errorHeaderService;
+
+    @Mock
+    private Environment environment;
+
+    @InjectMocks
+    private CommandLineApplication commandLineApplication;
+
+    @Test
+    public void testCommandLineApplication() {
+        // Mock behavior of dependencies
+        when(messageHeaderService.someMethod()).thenReturn("Mocked message");
+        when(errorHeaderService.someMethod()).thenReturn("Mocked error");
+        
+        // Mock property values
+        when(environment.getProperty("property.from.file")).thenReturn("Mocked value");
+
+        // Call the method to be tested
+        commandLineApplication.run("arg1", "arg2", "arg3", "arg4");
+
+        // Add assertions if necessary
+    }
+}
