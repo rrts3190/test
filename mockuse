@@ -9,6 +9,17 @@
   mockedStatic.when(BufferedReader::new).thenAnswer(invocation -> mockBufferedReader); // Mock creation
 
 
+ String[] lines = {"Mocked line 1", "Mocked line 2", null};
+
+        try (MockedConstruction<BufferedReader> mockedConstruction = Mockito.mockConstruction(BufferedReader.class, (mock, context) -> {
+            // Stubbing readLine() method
+            when(mock.readLine()).thenAnswer(invocation -> {
+                // Get the current index to determine which value to return
+                int currentIndex = context.getAnswers().size() - 1;
+                return lines[currentIndex];
+            });
+
+
 try (MockedStatic<BufferedReader> mockedStatic = Mockito.mockStatic(BufferedReader.class)) {
             Constructor<BufferedReader> constructor = BufferedReader.class.getDeclaredConstructor(Reader.class);
             mockedStatic.when(() -> constructor.newInstance(Mockito.any(Reader.class))).thenReturn(mockBufferedReader); // Mock creation
