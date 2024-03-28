@@ -6,6 +6,9 @@
 </dependency>
 
 
+  mockedStatic.when(BufferedReader::new).thenAnswer(invocation -> mockBufferedReader); // Mock creation
+
+
 
 
   BufferedReader mockBufferedReader = new BufferedReader(new StringReader(expectedLine));
