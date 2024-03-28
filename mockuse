@@ -9,6 +9,10 @@
   mockedStatic.when(BufferedReader::new).thenAnswer(invocation -> mockBufferedReader); // Mock creation
 
 
+try (MockedStatic<BufferedReader> mockedStatic = Mockito.mockStatic(BufferedReader.class)) {
+            Constructor<BufferedReader> constructor = BufferedReader.class.getDeclaredConstructor(Reader.class);
+            mockedStatic.when(() -> constructor.newInstance(Mockito.any(Reader.class))).thenReturn(mockBufferedReader); // Mock creation
+
 
 
   BufferedReader mockBufferedReader = new BufferedReader(new StringReader(expectedLine));
