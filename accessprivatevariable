@@ -1,0 +1,25 @@
+import java.lang.reflect.Field;
+
+public class Example {
+    private String privateField = "originalValue";
+}
+
+public class ExampleTest {
+
+    @Test
+    void testChangePrivateFieldValue() throws NoSuchFieldException, IllegalAccessException {
+        Example example = new Example();
+
+        // Access the private field
+        Field privateField = Example.class.getDeclaredField("privateField");
+
+        // Make it accessible
+        privateField.setAccessible(true);
+
+        // Change the value
+        privateField.set(example, "newValue");
+
+        // Verify the change
+        assertEquals("newValue", example.privateField);
+    }
+}
