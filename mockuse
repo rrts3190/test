@@ -7,6 +7,20 @@
 
 
 
+
+  BufferedReader mockBufferedReader = new BufferedReader(new StringReader(expectedLine));
+        try (MockedStatic<BufferedReader> mockedStatic = Mockito.mockStatic(BufferedReader.class)) {
+            mockedStatic.when(() -> new BufferedReader(any())).thenReturn(mockBufferedReader);
+
+            // Your test logic that uses BufferedReader
+            FileProcessor fileProcessor = new FileProcessor();
+            fileProcessor.processFile("test.txt");
+
+            // Your assertions
+        }
+
+
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
