@@ -1,0 +1,46 @@
+<dependency>
+    <groupId>org.jmockit</groupId>
+    <artifactId>jmockit</artifactId>
+    <version>1.49</version> <!-- Make sure to use the latest version -->
+    <scope>test</scope>
+</dependency>
+
+
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
+
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+public class FileHandlerTest {
+
+    @Test
+    void testReadAllLinesFromFile() throws IOException {
+        String[] expectedLines = {"line1", "line2", "line3"};
+
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.lines(any(Path.class)))
+                       .thenAnswer(invocation -> Stream.of(expectedLines));
+
+            String[] result = FileHandler.readAllLinesFromFile("test.txt");
+
+            assertEquals(expectedLines.length, result.length);
+            for (int i = 0; i < expectedLines.length; i++) {
+                assertEquals(expectedLines[i], result[i]);
+            }
+        }
+    }
+}
