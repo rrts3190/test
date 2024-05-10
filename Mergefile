@@ -1,0 +1,15 @@
+public static void mergeFiles(String[] fileNames, String mergedFileName) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(mergedFileName);
+             BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+            for (String fileName : fileNames) {
+                try (FileInputStream fis = new FileInputStream(fileName);
+                     BufferedInputStream bis = new BufferedInputStream(fis)) {
+                    byte[] buffer = new byte[4096]; // Adjust buffer size as needed
+                    int bytesRead;
+                    while ((bytesRead = bis.read(buffer)) != -1) {
+                        bos.write(buffer, 0, bytesRead);
+                    }
+                }
+            }
+        }
+    }
