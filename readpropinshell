@@ -1,0 +1,16 @@
+# Filter properties file to remove comments and empty lines
+filtered_props=$(grep -v '^#' config.properties | grep -v '^[[:space:]]*$')
+
+# Load filtered properties
+while IFS='=' read -r key value; do
+    # Trim leading/trailing whitespace from key and value
+    key=$(echo "$key" | tr -d '[:space:]')
+    value=$(echo "$value" | tr -d '[:space:]')
+
+    # Set variable
+    eval "$key=\"$value\""
+done <<< "$filtered_props"
+
+# Print the values of the properties
+echo "Value of ems.outbound: $ems_outbound"
+echo "Value of df.outbound: $df_outbound"
