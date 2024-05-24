@@ -1,0 +1,10 @@
+insert_job: check_file_yesterday
+job_type: c
+command: FILE="/home/axotcuat/$(date -d 'yesterday' +%Y/%m/%d)/Myfile-$(date -d 'yesterday' +%Y-%m-%d)"; [ -e $FILE ] && ([ ! -s $FILE ] && echo "File is empty" || (echo "File is not empty" && exit 2)) || (echo "File not found" && exit 1)
+machine: your_machine_name
+std_out_file: /path/to/std_out_file.txt
+std_err_file: /path/to/std_err_file.txt
+alarm_if_fail: 1
+max_exit_status: 1
+max_run_alarm: 3
+retry_interval: 10
