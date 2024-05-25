@@ -1,0 +1,24 @@
+insert_job: check_file_yesterday
+job_type: c
+command: |
+  FILE="/home/axotcuat/$(date -d 'yesterday' +%Y/%m/%d)/Myfile-$(date -d 'yesterday' +%Y-%m-%d)"
+  end_time=$(date -d "+1 hour" +%s)
+  while [ $(date +%s) -le $end_time ]; do
+    if [ -e "$FILE" ]; then
+      if [ ! -s "$FILE" ]; then
+        echo "File is empty"
+        exit 0
+      else
+        echo "File is not empty"
+      fi
+    else
+      echo "File not found"
+    fi
+    sleep 300  # Sleep for 5 minutes
+  done
+  exit 1
+machine: your_machine_name
+std_out_file: /path/to/check_file_std_out_file.txt
+std_err_file: /path/to/check_file_std_err_file.txt
+alarm_if_fail: 1
+condition: s(create_file_job)
