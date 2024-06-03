@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Set the source and destination directories
+BACKUP_SOURCE="/path/to/source"
+BACKUP_DESTINATION="/path/to/destination"
+
+# Ensure the backup destination exists
+mkdir -p "$BACKUP_DESTINATION"
+
+# Use find to locate the directories, excluding the logs directory, and copy them using cp --parents
+find "$BACKUP_SOURCE" -type d -not -path "*/logs/*" -exec cp --parents -r {} "$BACKUP_DESTINATION" \;
