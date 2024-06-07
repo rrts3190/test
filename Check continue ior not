@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Function to get the container status
+is_container_running() {
+    local container_id=$1
+    docker inspect --format '{{.State.Running}}' $container_id 2>/dev/null
+}
+
+# Function to get the container's start time
+get_container_start_time() {
+    local container_id=$1
+    docker inspect --format '{{.State.StartedAt}}' $container_id 2>/dev/null
+}
+
+# Function to check if the container has been running for more than 3 minutes
+is_running_more_than_3_minutes() {
+    local container_id=$1
+    local start_time=$(get_container_start_time $container_id)
+    local start_seconds=$(date -d "$start_time" +%s)
+    local current_seconds=$(date +%s)
+    local runtime=$((current_seconds - start_seconds))
+    [ $runtime -gt 180 ]  # 180 seconds = 3 minutes
+}
+
+# Get the latest container ID with a specific filter (e.g., by image name)
+container_id=$(docker ps -q --filter "ancestor=your_image_name" --latest)
+
+# Check if the container is running
+if [ "$(is_container_running $container_id)" = "true" ]; then
+    echo "Container is running."
+    
+    # Wait until the container has been running for 3 minutes
+    while ! is_running_more_than_3_minutes $container_id; do
+        echo "Waiting for container to run for 3 minutes..."
+        sleep 10  # Check every 10 seconds
+    done
+    
+    echo "Container has been running for more than 3 minutes."
+    echo "Marking job as successful."
+else
+    echo "Container is not running."
+    exit 1
+fi
