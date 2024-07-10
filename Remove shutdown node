@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# List all nodes and filter out the ones that are in a shutdown state
+shutdown_nodes=$(docker node ls --format '{{.ID}} {{.Status}}' | grep -i 'down' | awk '{print $1}')
+
+# Remove each shutdown node
+for node_id in $shutdown_nodes; do
+    echo "Removing node: $node_id"
+    docker node rm $node_id
+done
+
+echo "All shutdown nodes have been removed."
