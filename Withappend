@@ -1,0 +1,36 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Map;
+import java.util.HashMap;
+
+public class AppendCSV {
+    public static void main(String[] args) {
+        // Example maps
+        Map<Integer, String> missingInbound = new HashMap<>();
+        Map<Integer, String> missingOutbound = new HashMap<>();
+
+        missingInbound.put(124, "someValue");
+        missingOutbound.put(123, "anotherValue");
+
+        // FileWriter to append to CSV
+        try (FileWriter writer = new FileWriter("output.csv", true)) {
+            // If the file is empty, write the header
+            boolean isNewFile = new java.io.File("output.csv").length() == 0;
+            if (isNewFile) {
+                writer.append("Missing inbound, Missing outbound\n");
+            }
+
+            // Find the largest map size
+            int maxSize = Math.max(missingInbound.size(), missingOutbound.size());
+            
+            // Write map entries to CSV
+            for (int i = 0; i < maxSize; i++) {
+                String inboundValue = (i < missingInbound.size()) ? missingInbound.keySet().toArray()[i].toString() : "";
+                String outboundValue = (i < missingOutbound.size()) ? missingOutbound.keySet().toArray()[i].toString() : "";
+                writer.append(inboundValue).append(",").append(outboundValue).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
