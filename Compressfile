@@ -1,0 +1,39 @@
+import java.io.*;
+import java.util.zip.GZIPOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+public class FileConverter {
+
+    public static void main(String[] args) {
+        String filePath = "path/to/your/file.csv";
+        File file = new File(filePath);
+        
+        // Check file size
+        if (file.length() > 20 * 1024 * 1024) { // 20 MB in bytes
+            try {
+                convertToGz(file);
+                System.out.println("File converted to csv.gz successfully.");
+            } catch (IOException e) {
+                System.err.println("An error occurred during file conversion: " + e.getMessage());
+            }
+        } else {
+            System.out.println("File size is less than 20 MB, no conversion needed.");
+        }
+    }
+
+    public static void convertToGz(File file) throws IOException {
+        String outputFilePath = file.getAbsolutePath() + ".gz";
+        
+        try (FileInputStream fis = new FileInputStream(file);
+             FileOutputStream fos = new FileOutputStream(outputFilePath);
+             GZIPOutputStream gzipOS = new GZIPOutputStream(fos)) {
+            
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = fis.read(buffer)) != -1) {
+                gzipOS.write(buffer, 0, len);
+            }
+        }
+    }
+}
