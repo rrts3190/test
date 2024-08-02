@@ -1,0 +1,43 @@
+from("pulsar://tenant/namespace/topic?maxMessagesPerPoll=10000&consumerQueueSize=1000")
+    .split().body()
+    .streaming()
+    .to("direct:processBatch")
+    .end();
+
+from("direct:processBatch")
+    .multicast().parallelProcessing()
+    .toD("direct:thread${header.threadNumber}")
+    .end();
+
+from("direct:processBatch")
+    .process(exchange -> {
+        int threadNumber = determineThreadNumber();
+        exchange.getIn().setHeader("threadNumber", threadNumber);
+    });
+
+// Dynamic thread routes for processing messages
+for (int i = 1; i <= 100; i++) {
+    from("direct:thread" + i).threads(10).process(exchange -> {
+        String messageType = determineMessageType(exchange);
+        String fileName = messageType + ".txt";
+        String message = exchange.getIn().getBody(String.class);
+        // Store message in the corresponding file using Camel's File component
+        exchange.getContext().getRouteController().createEndpoint("file:output?fileName=" + fileName, "file:output?fileName=" + fileName).createProducer().process(exchangeCopy -> {
+            exchangeCopy.getIn().setBody(message);
+        });
+    }).end();
+}
+
+private int determineThreadNumber() {
+    int threadNumber = threadCounter.getAndIncrement();
+    if (threadNumber > 100) {
+        threadCounter.set(1); // Reset to 1 if thread number exceeds 100
+        threadNumber = 1;
+    }
+    return threadNumber;
+}
+
+private String determineMessageType(Exchange exchange) {
+    // Logic to determine the message type based on message content
+    return "default"; // Placeholder logic, replace with actual implementation
+}
