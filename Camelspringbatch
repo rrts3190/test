@@ -1,0 +1,61 @@
+@Configuration
+public class CamelConfig extends RouteBuilder {
+
+    @Autowired
+    private CamelContext camelContext;
+
+    @Override
+    public void configure() throws Exception {
+        from("pulsar://tenant/namespace/topic?maxMessagesPerPoll=10000&consumerQueueSize=1000")
+            .aggregate(constant(true), new ArrayListAggregationStrategy())
+            .completionSize(1000) // Batch size
+            .completionTimeout(60000) // Timeout
+            .process(exchange -> {
+                List<String> allMessages = exchange.getIn().getBody(ArrayList.class);
+                for (String message : allMessages) {
+                    // Process each message as needed
+                }
+            })
+            .to("direct:startBatchJob"); // Trigger the Spring Batch job
+    }
+
+    @Override
+    public void configure() {
+        from("direct:startBatchJob")
+            .to("spring-batch:job:pulsarMessageJob?jobLauncherRef=jobLauncher")
+            .log("Spring Batch job executed successfully")
+            .to("file:output?fileName=processed_messages.txt"); // Store processed messages in a file
+    }
+}
+
+
+@Configuration
+public class BatchConfig {
+
+    @Bean
+    public Job pulsarMessageJob(JobBuilderFactory jobBuilderFactory, Step processPulsarMessagesStep) {
+        return jobBuilderFactory.get("pulsarMessageJob")
+                .start(processPulsarMessagesStep)
+                .build();
+    }
+
+    @Bean
+    public Step processPulsarMessagesStep(StepBuilderFactory stepBuilderFactory, ItemReader<String> pulsarMessageReader,
+                                          ItemWriter<String> pulsarMessageWriter) {
+        return stepBuilderFactory.get("processPulsarMessagesStep")
+                .<String, String>chunk(1000)
+                .reader(pulsarMessageReader)
+                .writer(pulsarMessageWriter)
+                .build();
+    }
+
+    @Bean
+    public PulsarMessageItemReader pulsarMessageReader() {
+        return new PulsarMessageItemReader(); // Implement this reader to read messages from Pulsar
+    }
+
+    @Bean
+    public PulsarMessageItemWriter pulsarMessageWriter() {
+        return new PulsarMessageItemWriter(); // Implement this writer to process and write messages
+    }
+}
