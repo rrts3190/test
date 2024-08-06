@@ -1,0 +1,74 @@
+import org.apache.camel.CamelContext;
+import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.impl.DefaultCamelContext;
+import org.apache.camel.component.pulsar.PulsarComponent;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+public class PulsarCamelExample {
+
+    public static void main(String[] args) throws Exception {
+        final int numberOfThreads = 10;
+        final int messagesPerThread = 1000;
+        final CountDownLatch latch = new CountDownLatch(numberOfThreads);
+        final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(numberOfThreads * messagesPerThread);
+
+        CamelContext camelContext = new DefaultCamelContext();
+
+        // Configure Pulsar component
+        PulsarComponent pulsarComponent = new PulsarComponent();
+        pulsarComponent.setServiceUrl("pulsar://localhost:6650");
+        camelContext.addComponent("pulsar", pulsarComponent);
+
+        // Add Camel route
+        camelContext.addRoutes(new RouteBuilder() {
+            @Override
+            public void configure() throws Exception {
+                from("pulsar:my-topic?subscriptionName=my-subscription&consumerQueueSize=1000")
+                    .routeId("pulsarRoute")
+                    .threads(numberOfThreads)
+                    .process(exchange -> {
+                        String message = exchange.getIn().getBody(String.class);
+                        messageQueue.put(message); // Add message to the blocking queue
+                        if (messageQueue.size() >= messagesPerThread) {
+                            latch.countDown(); // Decrease latch count when thread queue is full
+                        }
+                    });
+
+                from("seda:processMessages")
+                    .routeId("fileWriteRoute")
+                    .process(exchange -> {
+                        if (!latch.await(1, TimeUnit.MINUTES)) {
+                            // Timeout handling
+                            System.out.println("Timeout occurred: Not all threads received 1000 messages within 1 minute.");
+                        }
+                        while (!messageQueue.isEmpty()) {
+                            String message = messageQueue.take();
+                            exchange.getIn().setBody(message + "\n");
+                            exchange.getIn().setHeader("CamelFileName", "messages.txt");
+                            // Use .to method to write to file
+                            exchange.getContext().createProducerTemplate().send("direct:writeToFile", exchange);
+                        }
+                    });
+
+                from("direct:writeToFile")
+                    .to("file://path/to/output/directory?fileExist=Append");
+
+                // Timer route to trigger the timeout
+                from("timer:timeoutTimer?period=1m&repeatCount=1")
+                    .setHeader("CamelTimerFired", constant(true))
+                    .to("seda:processMessages");
+            }
+        });
+
+        // Start Camel context
+        camelContext.start();
+
+        // Wait for Camel context to finish processing
+        Thread.sleep(65000); // Slightly more than 1 minute to ensure all processing completes
+        camelContext.stop();
+    }
+}
