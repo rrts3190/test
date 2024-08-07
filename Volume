@@ -1,0 +1,81 @@
+version: '3.8'
+
+x-common: &common_config
+  restart: always
+  deploy:
+    replicas: 3
+    update_config:
+      parallelism: 2
+      delay: 10s
+    restart_policy:
+      condition: on-failure
+
+x-volumes: &common_volumes
+  - trse_logs:/local/trse/logs
+  - trse_dockerenv:/local/trse/.dockerenv
+  - work_propstore:/local/trse/work/propstore
+  - inbound_trace_config:/local/trse/InboundTraceConfiguration.xml
+  - application_properties:/local/trse/application.properties
+  - java_xsd:/local/trse/java/xsd
+  - appdata_axotc:/root/appdata/axotc
+
+services:
+  service1:
+    image: your_image1
+    <<: *common_config
+    volumes: *common_volumes
+
+  service2:
+    image: your_image2
+    <<: *common_config
+    volumes: *common_volumes
+
+volumes:
+  trse_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${TRSESERVICEID}/trse/logs/local/trse/logs
+
+  trse_dockerenv:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${TRSESERVICEID}/trse/stack/.dockerenv
+
+  work_propstore:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${TRSESERVICEID}/work/propstore
+
+  inbound_trace_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${TRSESERVICEID}/trse/stack/consumer/InboundTraceConfiguration.xml
+
+  application_properties:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${TRSESERVICEID}/trse/configs/consumer/application.properties
+
+  java_xsd:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${TRSESERVICEID}/java/xsd
+
+  appdata_axotc:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${TRSESERVICEID}/appdata/axotc
