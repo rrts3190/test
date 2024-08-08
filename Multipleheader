@@ -1,0 +1,40 @@
+import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.Exchange;
+import org.apache.camel.processor.aggregate.AggregationStrategy;
+
+public class PulsarToFileRoute extends RouteBuilder {
+
+    @Override
+    public void configure() throws Exception {
+
+        from("pulsar:persistent://tenant/namespace/topic?subscriptionName=sub1")
+            .aggregate(simple("${header.messagetype}-${header.partid}"), new MultiHeaderAggregationStrategy())
+            .completionSize(10000)
+            .completionTimeout(30000)
+            .process(exchange -> {
+                String messageType = exchange.getIn().getHeader("messagetype", String.class);
+                String partId = exchange.getIn().getHeader("partid", String.class);
+                String fileName = String.format("Outboud-%s-%s.txt", messageType, partId);
+                exchange.getIn().setHeader(Exchange.FILE_NAME, fileName);
+            })
+            .to("file:data/output?fileExist=Append");
+    }
+}
+
+class MultiHeaderAggregationStrategy implements AggregationStrategy {
+
+    @Override
+    public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
+        if (oldExchange == null) {
+            return newExchange;
+        }
+
+        String oldBody = oldExchange.getIn().getBody(String.class);
+        String newBody = newExchange.getIn().getBody(String.class);
+        String aggregatedBody = oldBody + System.lineSeparator() + newBody;
+
+        oldExchange.getIn().setBody(aggregatedBody);
+
+        return oldExchange;
+    }
+}
