@@ -1,0 +1,43 @@
+import org.apache.camel.spring.Main;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
+public class MainApp {
+
+    public static void main(String[] args) throws Exception {
+        // Create a Spring application context
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+
+        // Load properties from the file specified by the command line argument
+        String propertyFilePath = System.getProperty("propertyfile");
+        Properties properties = loadProperties(propertyFilePath);
+
+        // Add a PropertySourcesPlaceholderConfigurer to the context
+        PropertySourcesPlaceholderConfigurer propertyConfigurer = new PropertySourcesPlaceholderConfigurer();
+        propertyConfigurer.setProperties(properties);
+        context.addBeanFactoryPostProcessor(propertyConfigurer);
+
+        // Register the configuration class
+        context.register(AppConfig.class);
+
+        // Refresh the context to apply the configuration
+        context.refresh();
+
+        // Create and run the Camel Main instance
+        Main main = new Main();
+        main.setApplicationContext(context);
+        main.run(args);
+    }
+
+    private static Properties loadProperties(String filePath) throws IOException {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            properties.load(fis);
+        }
+        return properties;
+    }
+}
