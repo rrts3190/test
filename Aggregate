@@ -1,0 +1,33 @@
+import org.apache.camel.AggregationStrategy;
+import org.apache.camel.Exchange;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class HeaderPreservingAggregationStrategy implements AggregationStrategy {
+    @Override
+    public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
+        if (oldExchange == null) {
+            // Create a new list to store body and headers
+            List<Map<String, Object>> aggregatedList = new ArrayList<>();
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("body", newExchange.getIn().getBody());
+            entry.put("headers", newExchange.getIn().getHeaders());
+            aggregatedList.add(entry);
+
+            newExchange.getIn().setBody(aggregatedList);
+            return newExchange;
+        } else {
+            // Add the new message's body and headers to the existing list
+            List<Map<String, Object>> aggregatedList = oldExchange.getIn().getBody(List.class);
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("body", newExchange.getIn().getBody());
+            entry.put("headers", newExchange.getIn().getHeaders());
+            aggregatedList.add(entry);
+
+            return oldExchange;
+        }
+    }
+}
