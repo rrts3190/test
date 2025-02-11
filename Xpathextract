@@ -1,0 +1,57 @@
+import org.w3c.dom.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.*;
+
+public class XPathExtractor {
+    public static void main(String[] args) {
+        try {
+            // Load the XML file
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true); // To handle namespaces
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse("sample.xml"); // Replace with actual XML file
+
+            // Create XPath instance
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xpath = xPathFactory.newXPath();
+
+            // Define XPaths
+            String[] xpaths = {
+                "/fpml:nonpublicExecutionReport//fpml:tradeHeader/fpml:partyTradeIdentifier[@id='UII']/fpml:versionedTradeId/fpml:tradeId",
+                "/fpml:nonTradeAllocationReport//fpml:allocatedTo/fpml:tradeGroup/fpml:tradeGroupId[@tradeGroupIdScheme='http://www.nomura.com/trade-service/unique-trade-group-id']",
+                "/fpml:preTradeReport/fpml:preTrade/fpml:tradeHeader/fpml:partyTradeIdentifier/fpml:versionedTradeId/fpml:tradeId",
+                "/fpml:preTradeReport/fpml:orderProcessInformation/fpml:versionedOrderId/fpml:orderId"
+            };
+
+            // Iterate and extract values
+            for (String xp : xpaths) {
+                XPathExpression expr = xpath.compile(xp);
+                NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+
+                // Print formatted output
+                System.out.print(extractXPathComponents(xp));
+                for (int i = 0; i < nodes.getLength(); i++) {
+                    System.out.println(": " + nodes.item(i).getTextContent());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String extractXPathComponents(String xpath) {
+        // Remove attribute conditions and split
+        String formattedPath = xpath.replaceAll("\\[@.*?\\]", "");
+        String[] parts = formattedPath.split("/");
+
+        // Format output
+        StringBuilder output = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                output.append(part).append(", ");
+            }
+        }
+        return output.substring(0, output.length() - 2); // Remove last comma
+    }
+}
