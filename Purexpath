@@ -1,0 +1,62 @@
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.*;
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class XPathExtractor {
+    public static void main(String[] args) {
+        // XML as String (Replace with actual XML)
+        String xmlString = """
+            <fpml:nonTradeAllocationReport xmlns:fpml="http://www.fpml.org">
+                <fpml:allocatedTo>
+                    <fpml:tradeGroup>
+                        <fpml:tradeGroupId tradeGroupIdScheme="http://www.nomura.com/trade-service/unique-trade-group-id">TG123</fpml:tradeGroupId>
+                    </fpml:tradeGroup>
+                </fpml:allocatedTo>
+            </fpml:nonTradeAllocationReport>
+            """;
+
+        // Define XPath expressions
+        String[] xpaths = {
+            "/fpml:nonpublicExecutionReport//fpml:tradeHeader/fpml:partyTradeIdentifier[@id='UII']/fpml:versionedTradeId/fpml:tradeId",
+            "/fpml:nonTradeAllocationReport//fpml:allocatedTo/fpml:tradeGroup/fpml:tradeGroupId[@tradeGroupIdScheme='http://www.nomura.com/trade-service/unique-trade-group-id']",
+            "/fpml:preTradeReport/fpml:preTrade/fpml:tradeHeader/fpml:partyTradeIdentifier/fpml:versionedTradeId/fpml:tradeId",
+            "/fpml:preTradeReport/fpml:orderProcessInformation/fpml:versionedOrderId/fpml:orderId"
+        };
+
+        // Process and print extracted XPath components
+        for (String xp : xpaths) {
+            System.out.println(extractXPathComponents(xp));
+        }
+    }
+
+    // Extract components from XPath, including attribute values
+    private static String extractXPathComponents(String xpath) {
+        String formattedPath = xpath.replaceAll("\\[.*?\\]", ""); // Remove attributes for path processing
+        String[] parts = formattedPath.split("/");
+        List<String> outputParts = new ArrayList<>();
+
+        // Extract and format node names
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                if (part.contains(":")) {
+                    part = part.split(":")[1]; // Remove namespace prefix
+                }
+                outputParts.add(part);
+            }
+        }
+
+        // Extract attributes and values (e.g., id="UII", tradeGroupIdScheme="http://...")
+        Pattern pattern = Pattern.compile("\\[@(.*?)='(.*?)'\\]");
+        Matcher matcher = pattern.matcher(xpath);
+        while (matcher.find()) {
+            outputParts.add(matcher.group(1) + "=\"" + matcher.group(2) + "\"");
+        }
+
+        return String.join(", ", outputParts);
+    }
+}
