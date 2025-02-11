@@ -1,0 +1,61 @@
+import java.util.LinkedHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class XPathExtractor {
+    public static void main(String[] args) {
+        // Define XPath expressions
+        String[] xpaths = {
+            "/fpml:nonpublicExecutionReport//fpml:tradeHeader/fpml:partyTradeIdentifier[@id='UII']/fpml:versionedTradeId/fpml:tradeId",
+            "/fpml:nonTradeAllocationReport//fpml:allocatedTo/fpml:tradeGroup/fpml:tradeGroupId[@tradeGroupIdScheme='http://www.nomura.com/trade-service/unique-trade-group-id']",
+            "/fpml:preTradeReport/fpml:preTrade/fpml:tradeHeader/fpml:partyTradeIdentifier/fpml:versionedTradeId/fpml:tradeId",
+            "/fpml:preTradeReport/fpml:orderProcessInformation/fpml:versionedOrderId/fpml:orderId"
+        };
+
+        // Process and print extracted XPath components
+        for (String xp : xpaths) {
+            System.out.println(extractXPathComponents(xp));
+        }
+    }
+
+    // Extract components from XPath, ensuring attributes stay with tags and escaping quotes
+    private static String extractXPathComponents(String xpath) {
+        // Preserve tag order while keeping attributes with their elements
+        LinkedHashMap<String, String> tagAttributeMap = new LinkedHashMap<>();
+
+        // Extract attribute values (e.g., id="UII", tradeGroupIdScheme="http://...")
+        Pattern pattern = Pattern.compile("/([^/\\[]+)\\[@(.*?)='(.*?)'\\]");
+        Matcher matcher = pattern.matcher(xpath);
+        while (matcher.find()) {
+            String tagName = removeNamespace(matcher.group(1)); // Remove namespace
+            String attrName = matcher.group(2);
+            String attrValue = matcher.group(3).replace("\"", "\\\""); // Escape quotes
+            tagAttributeMap.put(tagName, attrName + "=\\\"" + attrValue + "\\\"");
+        }
+
+        // Extract tags without attributes
+        String cleanXPath = xpath.replaceAll("\\[@.*?\\]", ""); // Remove attribute parts
+        String[] parts = cleanXPath.split("/");
+
+        // Process the extracted elements
+        StringBuilder result = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                String tagName = removeNamespace(part);
+                if (tagAttributeMap.containsKey(tagName)) {
+                    result.append(tagName).append(" ").append(tagAttributeMap.get(tagName)).append(", ");
+                } else {
+                    result.append(tagName).append(", ");
+                }
+            }
+        }
+
+        // Remove the last comma and space
+        return result.substring(0, result.length() - 2);
+    }
+
+    // Remove namespace from tag names (e.g., fpml:tradeHeader -> tradeHeader)
+    private static String removeNamespace(String tag) {
+        return tag.contains(":") ? tag.split(":")[1] : tag;
+    }
+}
