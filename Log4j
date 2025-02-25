@@ -1,0 +1,25 @@
+# Root logger
+rootLogger.level = info
+rootLogger.appenderRefs = RollingFile
+rootLogger.appenderRef.RollingFile.ref = RollingFileAppender
+
+# Rolling File Appender
+appender.RollingFileAppender.type = RollingFile
+appender.RollingFileAppender.name = RollingFile
+appender.RollingFileAppender.fileName = logs/application.log
+appender.RollingFileAppender.filePattern = logs/archive/application-%d{yyyy-MM-dd}.log.zip
+
+# Pattern Layout
+appender.RollingFileAppender.layout.type = PatternLayout
+appender.RollingFileAppender.layout.pattern = %d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %c - %msg%n
+
+# Rollover Policy (Time-based with ZIP compression)
+appender.RollingFileAppender.policies.type = Policies
+appender.RollingFileAppender.policies.time.type = TimeBasedTriggeringPolicy
+appender.RollingFileAppender.policies.time.interval = 1
+appender.RollingFileAppender.policies.time.modulate = true
+
+# Compression and Max Retention
+appender.RollingFileAppender.strategy.type = DefaultRolloverStrategy
+appender.RollingFileAppender.strategy.max = 10
+appender.RollingFileAppender.strategy.compressionLevel = 9
