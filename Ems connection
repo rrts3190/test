@@ -1,0 +1,63 @@
+import com.tibco.tibjms.TibjmsConnection;
+import com.tibco.tibjms.TibjmsConnectionFactory;
+
+import javax.jms.*;
+
+public class TibcoEMSFailoverDemo {
+
+    public static void main(String[] args) {
+        String serverUrl = "tcp://nodeA:7222,tcp://nodeB:7222"; // Failover-enabled URL
+        String userName = "admin";
+        String password = "admin";
+        String queueName = "sample.queue";
+
+        try {
+            TibjmsConnectionFactory factory = new TibjmsConnectionFactory(serverUrl);
+            Connection connection = factory.createConnection(userName, password);
+
+            // Cast to TibjmsConnection to use getActiveURL()
+            TibjmsConnection tibConn = (TibjmsConnection) connection;
+
+            // Set Exception Listener to detect failover
+            connection.setExceptionListener(new ExceptionListener() {
+                @Override
+                public void onException(JMSException exception) {
+                    System.out.println("Connection Exception Detected: " + exception.getMessage());
+                    try {
+                        System.out.println("Switched to EMS node: " + tibConn.getActiveURL());
+                    } catch (JMSException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            // Print initially connected URL
+            System.out.println("Connected to EMS node: " + tibConn.getActiveURL());
+
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Queue queue = session.createQueue(queueName);
+            MessageConsumer consumer = session.createConsumer(queue);
+
+            consumer.setMessageListener(message -> {
+                try {
+                    if (message instanceof TextMessage) {
+                        System.out.println("Received message: " + ((TextMessage) message).getText());
+                    } else {
+                        System.out.println("Received non-text message");
+                    }
+                } catch (JMSException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            connection.start();
+            System.out.println("Listener is active on queue: " + queueName);
+
+            // Keep the main thread alive
+            Thread.sleep(Long.MAX_VALUE);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
